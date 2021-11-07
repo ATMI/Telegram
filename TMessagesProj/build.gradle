@@ -22,6 +22,10 @@ dependencies {
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation "androidx.sharetarget:sharetarget:1.1.0"
 
+    implementation 'androidx.interpolator:interpolator:1.0.0'
+    implementation 'androidx.viewpager:viewpager:1.0.0'
+    implementation 'org.osmdroid:osmdroid-android:6.1.10'
+
     compileOnly 'org.checkerframework:checker-qual:2.5.2'
     compileOnly 'org.checkerframework:checker-compat-qual:2.5.0'
     implementation 'com.google.firebase:firebase-messaging:22.0.0'
