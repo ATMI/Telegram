@@ -15,6 +15,7 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,9 +27,11 @@ import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
+import org.telegram.messenger.MessagesStorage;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.tgnet.ConnectionsManager;
+import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.ActionBarMenu;
@@ -43,8 +46,10 @@ import org.telegram.ui.Cells.LoadingCell;
 import org.telegram.ui.Cells.RadioButtonCell;
 import org.telegram.ui.Cells.ShadowSectionCell;
 import org.telegram.ui.Cells.TextCell;
+import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
+import org.telegram.ui.Components.AlertsCreator;
 import org.telegram.ui.Components.EditTextBoldCursor;
 import org.telegram.ui.Components.InviteLinkBottomSheet;
 import org.telegram.ui.Components.LayoutHelper;
@@ -73,6 +78,9 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
     private LinearLayout linkContainer;
     private LinearLayout publicContainer;
     private LinearLayout privateContainer;
+    private LinearLayout noForwardsContainer;
+    private HeaderCell noForwardsHeaderCell;
+    private TextCheckCell noForwardsCheck;
     private LinkActionView permanentLinkView;
     private TextCell manageLinksTextView;
     private TextInfoPrivacyCell manageLinksInfoCell;
@@ -399,6 +407,32 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
         manageLinksInfoCell = new TextInfoPrivacyCell(context);
         linearLayout.addView(manageLinksInfoCell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 
+
+        noForwardsContainer = new LinearLayout(context);
+        noForwardsContainer.setOrientation(LinearLayout.VERTICAL);
+        noForwardsContainer.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+
+        noForwardsHeaderCell = new HeaderCell(context, 23);
+        // todo: text resource
+        noForwardsHeaderCell.setText("Saving content");
+        noForwardsContainer.addView(noForwardsHeaderCell);
+
+        noForwardsCheck = new TextCheckCell(context);
+        // noForwardsCheck.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        // todo: text resource
+        noForwardsCheck.setTextAndCheck("Restrict saving content", currentChat.noforwards, false);
+        noForwardsCheck.setOnClickListener(v -> noForwardsCheck.setChecked(!noForwardsCheck.isChecked()));
+        noForwardsContainer.addView(noForwardsCheck);
+
+        linearLayout.addView(noForwardsContainer, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+        TextInfoPrivacyCell savingContentInfoCell = new TextInfoPrivacyCell(context);
+        savingContentInfoCell.setText("Participants won't be able to forward messages from this group or save media files");
+        savingContentInfoCell.setBackground(Theme.getThemedDrawable(typeInfoCell.getContext(), R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow));
+        linearLayout.addView(savingContentInfoCell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+
+
         if (!isPrivate && currentChat.username != null) {
             ignoreTextChanges = true;
             usernameTextView.setText(currentChat.username);
@@ -452,6 +486,24 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
                 AndroidUtilities.shakeView(checkTextView, 2, 0);
                 return false;
             }
+        }
+
+        if (getMessagesController().setNoForwards(currentChat, noForwardsCheck.isChecked(), new MessagesController.RequestExecutedCallback() {
+            @Override
+            public void onSuccess() {
+                Log.d("CHAT", "no forwards: " + currentChat.noforwards + " for chat: " + currentChat.title);
+                processDone();
+            }
+
+            @Override
+            public void onFailure(TLObject request, TLRPC.TL_error error) {
+                if (null != noForwardsCheck) {
+                    noForwardsCheck.setChecked(currentChat.noforwards);
+                }
+                AlertsCreator.processError(currentAccount, error, ChatEditTypeActivity.this, request);
+            }
+        })) {
+            return false;
         }
 
         String oldUserName = currentChat.username != null ? currentChat.username : "";
@@ -815,6 +867,8 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
         themeDescriptions.add(new ThemeDescription(manageLinksTextView, ThemeDescription.FLAG_TEXTCOLOR, new Class[]{TextCell.class}, new String[]{"textView"}, null, null, null, Theme.key_windowBackgroundWhiteBlackText));
         themeDescriptions.add(new ThemeDescription(manageLinksTextView, 0, new Class[]{TextCell.class}, new String[]{"imageView"}, null, null, null, Theme.key_windowBackgroundWhiteGrayIcon));
 
+        // todo: complete themes
+        themeDescriptions.add(new ThemeDescription(noForwardsContainer, ThemeDescription.FLAG_BACKGROUND, null, null, null, null, Theme.key_windowBackgroundWhite));
 
         return themeDescriptions;
     }

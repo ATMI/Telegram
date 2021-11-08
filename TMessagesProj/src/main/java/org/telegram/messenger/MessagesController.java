@@ -25,6 +25,7 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 import android.util.SparseIntArray;
+import android.widget.Toast;
 
 import androidx.collection.LongSparseArray;
 import androidx.core.app.NotificationManagerCompat;
@@ -14596,6 +14597,32 @@ public class MessagesController extends BaseController implements NotificationCe
         }
     }
 
+    // todo: check, because copy paste used from 'toogleChannelInvitesHistory')
+    public boolean setNoForwards(TLRPC.Chat chat, boolean enabled, RequestExecutedCallback callback) {
+        if (chat.noforwards == enabled) {
+            return false;
+        }
+
+        TLRPC.TL_messages_toggleNoForwards req = new TLRPC.TL_messages_toggleNoForwards();
+        req.peer = getInputPeer(-chat.id);
+        req.enabled = enabled;
+
+        getConnectionsManager().sendRequest(req, (response, error) -> {
+            if (null == response) {
+                if (null != callback) {
+                    AndroidUtilities.runOnUIThread(()->callback.onFailure(req, error));
+                }
+            } else {
+                chat.noforwards = enabled;
+                if (null != callback) {
+                    AndroidUtilities.runOnUIThread(callback::onSuccess);
+                }
+            }
+        }, ConnectionsManager.RequestFlagInvokeAfter);
+
+        return true;
+    }
+
     public int getChatPendingRequestsOnClosed(long chatId) {
         return mainPreferences.getInt("chatPendingRequests" + chatId, 0);
     }
@@ -14609,5 +14636,10 @@ public class MessagesController extends BaseController implements NotificationCe
     public interface MessagesLoadedCallback {
         void onMessagesLoaded(boolean fromCache);
         void onError();
+    }
+
+    public interface RequestExecutedCallback {
+        void onSuccess();
+        void onFailure(TLObject request, TLRPC.TL_error error);
     }
 }

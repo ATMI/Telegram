@@ -37347,6 +37347,9 @@ public class TLRPC {
             noforwards = (flags & 33554432) != 0;
             id = stream.readInt64(exception);
             title = stream.readString(exception);
+            if (noforwards) {
+				Log.d("CHAT", "no forwards enabled for: " + title);
+			}
             photo = ChatPhoto.TLdeserialize(stream, stream.readInt32(exception), exception);
             participants_count = stream.readInt32(exception);
             date = stream.readInt32(exception);

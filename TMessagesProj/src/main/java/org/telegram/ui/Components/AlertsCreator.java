@@ -356,6 +356,11 @@ public class AlertsCreator {
                     showSimpleToast(fragment, error.text);
                     break;
             }
+        } else if (request instanceof TLRPC.TL_messages_toggleNoForwards) {
+            if ("CHAT_NOT_MODIFIED".equals(error.text)) {
+                // todo: string resource
+                showSimpleAlert(fragment, "There should be normal error message!");
+            }
         }
 
         return null;

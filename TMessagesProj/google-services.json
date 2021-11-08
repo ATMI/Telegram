@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "669001091651",
-    "project_id": "telegram-13560",
-    "storage_bucket": "telegram-13560.appspot.com"
+    "project_number": "1063951886106",
+    "project_id": "telegram-2-27517",
+    "storage_bucket": "telegram-2-27517.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:669001091651:android:34349b2cb209e1a1dda2f6",
+        "mobilesdk_app_id": "1:1063951886106:android:9e9d886263bd65ea0b2ea3",
         "android_client_info": {
           "package_name": "org.telegram.messenger"
         }
       },
       "oauth_client": [
         {
-          "client_id": "669001091651-4q59hemf5vlknnub2edgffl6ubsjnsga.apps.googleusercontent.com",
+          "client_id": "1063951886106-soi8foqnh6ark51683emso0fmtqn9edm.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBUdZwTz_d4uJK180ZJWwkpO0pPkqi_xb8"
+          "current_key": "AIzaSyAZ-8ZTtGQD5R2dTrDLmMNBtHHwGevNfxU"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "669001091651-4q59hemf5vlknnub2edgffl6ubsjnsga.apps.googleusercontent.com",
+              "client_id": "1063951886106-soi8foqnh6ark51683emso0fmtqn9edm.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
@@ -36,27 +36,27 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:669001091651:android:9be9d63f5fb290d7dda2f6",
+        "mobilesdk_app_id": "1:1063951886106:android:0d1774a77da855570b2ea3",
         "android_client_info": {
           "package_name": "org.telegram.messenger.beta"
         }
       },
       "oauth_client": [
         {
-          "client_id": "669001091651-4q59hemf5vlknnub2edgffl6ubsjnsga.apps.googleusercontent.com",
+          "client_id": "1063951886106-soi8foqnh6ark51683emso0fmtqn9edm.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBUdZwTz_d4uJK180ZJWwkpO0pPkqi_xb8"
+          "current_key": "AIzaSyAZ-8ZTtGQD5R2dTrDLmMNBtHHwGevNfxU"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "669001091651-4q59hemf5vlknnub2edgffl6ubsjnsga.apps.googleusercontent.com",
+              "client_id": "1063951886106-soi8foqnh6ark51683emso0fmtqn9edm.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
