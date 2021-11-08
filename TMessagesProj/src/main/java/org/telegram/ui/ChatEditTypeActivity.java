@@ -81,6 +81,7 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
     private LinearLayout noForwardsContainer;
     private HeaderCell noForwardsHeaderCell;
     private TextCheckCell noForwardsCheck;
+    private TextInfoPrivacyCell noForwardsDescription;
     private LinkActionView permanentLinkView;
     private TextCell manageLinksTextView;
     private TextInfoPrivacyCell manageLinksInfoCell;
@@ -407,7 +408,7 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
         manageLinksInfoCell = new TextInfoPrivacyCell(context);
         linearLayout.addView(manageLinksInfoCell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 
-
+        // базовых групп и супергрупп/каналов соответственно.
         noForwardsContainer = new LinearLayout(context);
         noForwardsContainer.setOrientation(LinearLayout.VERTICAL);
         noForwardsContainer.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
@@ -426,10 +427,10 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
 
         linearLayout.addView(noForwardsContainer, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 
-        TextInfoPrivacyCell savingContentInfoCell = new TextInfoPrivacyCell(context);
-        savingContentInfoCell.setText("Participants won't be able to forward messages from this group or save media files");
-        savingContentInfoCell.setBackground(Theme.getThemedDrawable(typeInfoCell.getContext(), R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow));
-        linearLayout.addView(savingContentInfoCell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        noForwardsDescription = new TextInfoPrivacyCell(context);
+        noForwardsDescription.setText("Participants won't be able to forward messages from this group or save media files");
+        noForwardsDescription.setBackground(Theme.getThemedDrawable(typeInfoCell.getContext(), R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow));
+        linearLayout.addView(noForwardsDescription, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 
 
 
@@ -488,22 +489,24 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
             }
         }
 
-        if (getMessagesController().setNoForwards(currentChat, noForwardsCheck.isChecked(), new MessagesController.RequestExecutedCallback() {
-            @Override
-            public void onSuccess() {
-                Log.d("CHAT", "no forwards: " + currentChat.noforwards + " for chat: " + currentChat.title);
-                processDone();
-            }
-
-            @Override
-            public void onFailure(TLObject request, TLRPC.TL_error error) {
-                if (null != noForwardsCheck) {
-                    noForwardsCheck.setChecked(currentChat.noforwards);
+        if (isPrivate) {
+            if (getMessagesController().setNoForwards(currentChat, noForwardsCheck.isChecked(), new MessagesController.RequestExecutedCallback() {
+                @Override
+                public void onSuccess() {
+                    Log.d("CHAT", "no forwards: " + currentChat.noforwards + " for chat: " + currentChat.title);
+                    processDone();
                 }
-                AlertsCreator.processError(currentAccount, error, ChatEditTypeActivity.this, request);
+
+                @Override
+                public void onFailure(TLObject request, TLRPC.TL_error error) {
+                    if (null != noForwardsCheck) {
+                        noForwardsCheck.setChecked(currentChat.noforwards);
+                    }
+                    AlertsCreator.processError(currentAccount, error, ChatEditTypeActivity.this, request);
+                }
+            })) {
+                return false;
             }
-        })) {
-            return false;
         }
 
         String oldUserName = currentChat.username != null ? currentChat.username : "";
@@ -639,8 +642,12 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
                 typeInfoCell.setBackgroundDrawable(Theme.getThemedDrawable(typeInfoCell.getContext(), R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow));
                 manageLinksInfoCell.setBackground(Theme.getThemedDrawable(typeInfoCell.getContext(), R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow));
                 manageLinksInfoCell.setText(LocaleController.getString("ManageLinksInfoHelp", R.string.ManageLinksInfoHelp));
+                noForwardsContainer.setVisibility(View.VISIBLE);
+                noForwardsDescription.setVisibility(View.VISIBLE);
             } else {
                 typeInfoCell.setBackgroundDrawable(checkTextView.getVisibility() == View.VISIBLE ? null : Theme.getThemedDrawable(typeInfoCell.getContext(), R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow));
+                noForwardsContainer.setVisibility(View.GONE);
+                noForwardsDescription.setVisibility(View.GONE);
             }
         }
         radioButtonCell1.setChecked(!isPrivate, true);
@@ -868,7 +875,7 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
         themeDescriptions.add(new ThemeDescription(manageLinksTextView, 0, new Class[]{TextCell.class}, new String[]{"imageView"}, null, null, null, Theme.key_windowBackgroundWhiteGrayIcon));
 
         // todo: complete themes
-        themeDescriptions.add(new ThemeDescription(noForwardsContainer, ThemeDescription.FLAG_BACKGROUND, null, null, null, null, Theme.key_windowBackgroundWhite));
+        // themeDescriptions.add(new ThemeDescription(noForwardsContainer, ThemeDescription.FLAG_BACKGROUND, null, null, null, null, Theme.key_windowBackgroundWhite));
 
         return themeDescriptions;
     }

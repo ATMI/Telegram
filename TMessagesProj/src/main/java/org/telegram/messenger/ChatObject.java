@@ -1466,6 +1466,10 @@ public class ChatObject {
         return false;
     }
 
+    public static boolean isBaseGroup(TLRPC.Chat chat) {
+        return chat instanceof TLRPC.TL_chat;
+    }
+
     public static boolean isLeftFromChat(TLRPC.Chat chat) {
         return chat == null || chat instanceof TLRPC.TL_chatEmpty || chat instanceof TLRPC.TL_chatForbidden || chat instanceof TLRPC.TL_channelForbidden || chat.left || chat.deactivated;
     }
