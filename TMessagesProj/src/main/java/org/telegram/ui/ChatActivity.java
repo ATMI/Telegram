@@ -12360,34 +12360,50 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 ActionBarMenuItem editItem = actionBar.createActionMode().getItem(edit);
                 ActionBarMenuItem forwardItem = actionBar.createActionMode().getItem(forward);
 
-                if (prevCantForwardCount == 0 && cantForwardMessagesCount != 0 || prevCantForwardCount != 0 && cantForwardMessagesCount == 0) {
-                    forwardButtonAnimation = new AnimatorSet();
-                    ArrayList<Animator> animators = new ArrayList<>();
-                    if (forwardItem != null) {
-                        forwardItem.setEnabled(cantForwardMessagesCount == 0);
-                        animators.add(ObjectAnimator.ofFloat(forwardItem, View.ALPHA, cantForwardMessagesCount == 0 ? 1.0f : 0.5f));
+                if (currentChat != null && currentChat.noforwards) {
+                    if (null != forwardItem) {
+                        forwardItem.setVisibility(View.GONE);
                     }
-                    if (forwardButton != null) {
-                        forwardButton.setEnabled(cantForwardMessagesCount == 0);
-                        animators.add(ObjectAnimator.ofFloat(forwardButton, View.ALPHA, cantForwardMessagesCount == 0 ? 1.0f : 0.5f));
+                    if (null != forwardButton) {
+                        forwardButton.setVisibility(View.GONE);
                     }
-                    forwardButtonAnimation.playTogether(animators);
-                    forwardButtonAnimation.setDuration(100);
-                    forwardButtonAnimation.addListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            forwardButtonAnimation = null;
-                        }
-                    });
-                    forwardButtonAnimation.start();
                 } else {
-                    if (forwardItem != null) {
-                        forwardItem.setEnabled(cantForwardMessagesCount == 0);
-                        forwardItem.setAlpha(cantForwardMessagesCount == 0 ? 1.0f : 0.5f);
+                    if (null != forwardItem) {
+                        forwardItem.setVisibility(View.VISIBLE);
                     }
-                    if (forwardButton != null) {
-                        forwardButton.setEnabled(cantForwardMessagesCount == 0);
-                        forwardButton.setAlpha(cantForwardMessagesCount == 0 ? 1.0f : 0.5f);
+                    if (null != forwardButton) {
+                        forwardButton.setVisibility(View.VISIBLE);
+                    }
+
+                    if (prevCantForwardCount == 0 && cantForwardMessagesCount != 0 || prevCantForwardCount != 0 && cantForwardMessagesCount == 0) {
+                        forwardButtonAnimation = new AnimatorSet();
+                        ArrayList<Animator> animators = new ArrayList<>();
+                        if (forwardItem != null) {
+                            forwardItem.setEnabled(cantForwardMessagesCount == 0);
+                            animators.add(ObjectAnimator.ofFloat(forwardItem, View.ALPHA, cantForwardMessagesCount == 0 ? 1.0f : 0.5f));
+                        }
+                        if (forwardButton != null) {
+                            forwardButton.setEnabled(cantForwardMessagesCount == 0);
+                            animators.add(ObjectAnimator.ofFloat(forwardButton, View.ALPHA, cantForwardMessagesCount == 0 ? 1.0f : 0.5f));
+                        }
+                        forwardButtonAnimation.playTogether(animators);
+                        forwardButtonAnimation.setDuration(100);
+                        forwardButtonAnimation.addListener(new AnimatorListenerAdapter() {
+                            @Override
+                            public void onAnimationEnd(Animator animation) {
+                                forwardButtonAnimation = null;
+                            }
+                        });
+                        forwardButtonAnimation.start();
+                    } else {
+                        if (forwardItem != null) {
+                            forwardItem.setEnabled(cantForwardMessagesCount == 0);
+                            forwardItem.setAlpha(cantForwardMessagesCount == 0 ? 1.0f : 0.5f);
+                        }
+                        if (forwardButton != null) {
+                            forwardButton.setEnabled(cantForwardMessagesCount == 0);
+                            forwardButton.setAlpha(cantForwardMessagesCount == 0 ? 1.0f : 0.5f);
+                        }
                     }
                 }
                 if (saveItem != null) {
