@@ -1591,6 +1591,10 @@ public class ChatObject {
         return !isChannel(chat) || chat.creator || chat.admin_rights != null && chat.admin_rights.post_messages || !chat.broadcast && !chat.gigagroup || chat.gigagroup && ChatObject.hasAdminRights(chat);
     }
 
+    public static boolean canForward(TLRPC.Chat chat) {
+        return chat == null || !chat.noforwards;
+    }
+
     public static String getBannedRightsString(TLRPC.TL_chatBannedRights bannedRights) {
         String currentBannedRights = "";
         currentBannedRights += bannedRights.view_messages ? 1 : 0;

@@ -12360,14 +12360,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 ActionBarMenuItem editItem = actionBar.createActionMode().getItem(edit);
                 ActionBarMenuItem forwardItem = actionBar.createActionMode().getItem(forward);
 
-                if (currentChat != null && currentChat.noforwards) {
-                    if (null != forwardItem) {
-                        forwardItem.setVisibility(View.GONE);
-                    }
-                    if (null != forwardButton) {
-                        forwardButton.setVisibility(View.GONE);
-                    }
-                } else {
+                if (ChatObject.canForward(currentChat)) {
                     if (null != forwardItem) {
                         forwardItem.setVisibility(View.VISIBLE);
                     }
@@ -12405,10 +12398,21 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                             forwardButton.setAlpha(cantForwardMessagesCount == 0 ? 1.0f : 0.5f);
                         }
                     }
-                }
-                if (saveItem != null) {
-                    saveItem.setVisibility(((canSaveMusicCount > 0 && canSaveDocumentsCount == 0) || (canSaveMusicCount == 0 && canSaveDocumentsCount > 0)) && cantSaveMessagesCount == 0 ? View.VISIBLE : View.GONE);
-                    saveItem.setContentDescription(canSaveMusicCount > 0 ? LocaleController.getString("SaveToMusic", R.string.SaveToMusic) : LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
+
+                    if (saveItem != null) {
+                        saveItem.setVisibility(((canSaveMusicCount > 0 && canSaveDocumentsCount == 0) || (canSaveMusicCount == 0 && canSaveDocumentsCount > 0)) && cantSaveMessagesCount == 0 ? View.VISIBLE : View.GONE);
+                        saveItem.setContentDescription(canSaveMusicCount > 0 ? LocaleController.getString("SaveToMusic", R.string.SaveToMusic) : LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
+                    }
+                } else {
+                    if (null != forwardItem) {
+                        forwardItem.setVisibility(View.GONE);
+                    }
+                    if (null != forwardButton) {
+                        forwardButton.setVisibility(View.GONE);
+                    }
+                    if (saveItem != null) {
+                        saveItem.setVisibility(View.GONE);
+                    }
                 }
 
                 int copyVisible = copyItem.getVisibility();
@@ -19679,24 +19683,28 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                                         icons.add(R.drawable.msg_pollstop);
                                     }
                                 } else if (selectedObject.isMusic()) {
-                                    items.add(LocaleController.getString("SaveToMusic", R.string.SaveToMusic));
-                                    options.add(10);
-                                    icons.add(R.drawable.msg_download);
+                                    if (ChatObject.canForward(currentChat)) {
+                                        items.add(LocaleController.getString("SaveToMusic", R.string.SaveToMusic));
+                                        options.add(10);
+                                        icons.add(R.drawable.msg_download);
+                                    }
                                 } else if (selectedObject.isDocument()) {
-                                    items.add(LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
-                                    options.add(10);
-                                    icons.add(R.drawable.msg_download);
+                                    if (ChatObject.canForward(currentChat)) {
+                                        items.add(LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
+                                        options.add(10);
+                                        icons.add(R.drawable.msg_download);
+                                    }
                                 }
                             }
                         } else if (type == 3) {
-                            if (selectedObject.messageOwner.media instanceof TLRPC.TL_messageMediaWebPage && MessageObject.isNewGifDocument(selectedObject.messageOwner.media.webpage.document)) {
+                            if (ChatObject.canForward(currentChat) && selectedObject.messageOwner.media instanceof TLRPC.TL_messageMediaWebPage && MessageObject.isNewGifDocument(selectedObject.messageOwner.media.webpage.document)) {
                                 items.add(LocaleController.getString("SaveToGIFs", R.string.SaveToGIFs));
                                 options.add(11);
                                 icons.add(R.drawable.msg_gif);
                             }
                         } else if (type == 4) {
                             if (selectedObject.isVideo()) {
-                                if (!selectedObject.needDrawBluredPreview()) {
+                                if (ChatObject.canForward(currentChat) && !selectedObject.needDrawBluredPreview()) {
                                     items.add(LocaleController.getString("SaveToGallery", R.string.SaveToGallery));
                                     options.add(4);
                                     icons.add(R.drawable.msg_gallery);
@@ -19705,26 +19713,30 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                                     icons.add(R.drawable.msg_shareout);
                                 }
                             } else if (selectedObject.isMusic()) {
-                                items.add(LocaleController.getString("SaveToMusic", R.string.SaveToMusic));
-                                options.add(10);
-                                icons.add(R.drawable.msg_download);
-                                items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
-                                options.add(6);
-                                icons.add(R.drawable.msg_shareout);
-                            } else if (selectedObject.getDocument() != null) {
-                                if (MessageObject.isNewGifDocument(selectedObject.getDocument())) {
-                                    items.add(LocaleController.getString("SaveToGIFs", R.string.SaveToGIFs));
-                                    options.add(11);
-                                    icons.add(R.drawable.msg_gif);
+                                if (ChatObject.canForward(currentChat)) {
+                                    items.add(LocaleController.getString("SaveToMusic", R.string.SaveToMusic));
+                                    options.add(10);
+                                    icons.add(R.drawable.msg_download);
+                                    items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
+                                    options.add(6);
+                                    icons.add(R.drawable.msg_shareout);
                                 }
-                                items.add(LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
-                                options.add(10);
-                                icons.add(R.drawable.msg_download);
-                                items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
-                                options.add(6);
-                                icons.add(R.drawable.msg_shareout);
+                            } else if (selectedObject.getDocument() != null) {
+                                if(ChatObject.canForward(currentChat)) {
+                                    if (MessageObject.isNewGifDocument(selectedObject.getDocument())) {
+                                        items.add(LocaleController.getString("SaveToGIFs", R.string.SaveToGIFs));
+                                        options.add(11);
+                                        icons.add(R.drawable.msg_gif);
+                                    }
+                                    items.add(LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
+                                    options.add(10);
+                                    icons.add(R.drawable.msg_download);
+                                    items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
+                                    options.add(6);
+                                    icons.add(R.drawable.msg_shareout);
+                                }
                             } else {
-                                if (!selectedObject.needDrawBluredPreview()) {
+                                if (ChatObject.canForward(currentChat) && !selectedObject.needDrawBluredPreview()) {
                                     items.add(LocaleController.getString("SaveToGallery", R.string.SaveToGallery));
                                     options.add(4);
                                     icons.add(R.drawable.msg_gallery);
@@ -19734,44 +19746,54 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                             items.add(LocaleController.getString("ApplyLocalizationFile", R.string.ApplyLocalizationFile));
                             options.add(5);
                             icons.add(R.drawable.msg_language);
-                            items.add(LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
-                            options.add(10);
-                            icons.add(R.drawable.msg_download);
-                            items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
-                            options.add(6);
-                            icons.add(R.drawable.msg_shareout);
+                            if (ChatObject.canForward(currentChat)) {
+                                items.add(LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
+                                options.add(10);
+                                icons.add(R.drawable.msg_download);
+                                items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
+                                options.add(6);
+                                icons.add(R.drawable.msg_shareout);
+                            }
                         } else if (type == 10) {
                             items.add(LocaleController.getString("ApplyThemeFile", R.string.ApplyThemeFile));
                             options.add(5);
                             icons.add(R.drawable.msg_theme);
-                            items.add(LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
-                            options.add(10);
-                            icons.add(R.drawable.msg_download);
-                            items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
-                            options.add(6);
-                            icons.add(R.drawable.msg_shareout);
+                            if (ChatObject.canForward(currentChat)) {
+                                items.add(LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
+                                options.add(10);
+                                icons.add(R.drawable.msg_download);
+                                items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
+                                options.add(6);
+                                icons.add(R.drawable.msg_shareout);
+                            }
                         } else if (type == 6) {
-                            items.add(LocaleController.getString("SaveToGallery", R.string.SaveToGallery));
-                            options.add(7);
-                            icons.add(R.drawable.msg_gallery);
-                            items.add(LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
-                            options.add(10);
-                            icons.add(R.drawable.msg_download);
-                            items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
-                            options.add(6);
-                            icons.add(R.drawable.msg_shareout);
+                            if (ChatObject.canForward(currentChat)) {
+                                items.add(LocaleController.getString("SaveToGallery", R.string.SaveToGallery));
+                                options.add(7);
+                                icons.add(R.drawable.msg_gallery);
+                                items.add(LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
+                                options.add(10);
+                                icons.add(R.drawable.msg_download);
+                                items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
+                                options.add(6);
+                                icons.add(R.drawable.msg_shareout);
+                            }
                         } else if (type == 7) {
                             if (selectedObject.isMask()) {
-                                items.add(LocaleController.getString("AddToMasks", R.string.AddToMasks));
-                                options.add(9);
-                                icons.add(R.drawable.msg_sticker);
+                                if (ChatObject.canForward(currentChat)) {
+                                    items.add(LocaleController.getString("AddToMasks", R.string.AddToMasks));
+                                    options.add(9);
+                                    icons.add(R.drawable.msg_sticker);
+                                }
                             } else {
-                                items.add(LocaleController.getString("AddToStickers", R.string.AddToStickers));
-                                options.add(9);
-                                icons.add(R.drawable.msg_sticker);
+                                if (ChatObject.canForward(currentChat)) {
+                                    items.add(LocaleController.getString("AddToStickers", R.string.AddToStickers));
+                                    options.add(9);
+                                    icons.add(R.drawable.msg_sticker);
+                                }
                                 TLRPC.Document document = selectedObject.getDocument();
                                 if (!getMediaDataController().isStickerInFavorites(document)) {
-                                    if (getMediaDataController().canAddStickerToFavorites() && MessageObject.isStickerHasSet(document)) {
+                                    if (ChatObject.canForward(currentChat) && getMediaDataController().canAddStickerToFavorites() && MessageObject.isStickerHasSet(document)) {
                                         items.add(LocaleController.getString("AddToFavorites", R.string.AddToFavorites));
                                         options.add(20);
                                         icons.add(R.drawable.msg_fave);
@@ -19800,7 +19822,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                         } else if (type == 9) {
                             TLRPC.Document document = selectedObject.getDocument();
                             if (!getMediaDataController().isStickerInFavorites(document)) {
-                                if (MessageObject.isStickerHasSet(document)) {
+                                if (ChatObject.canForward(currentChat) && MessageObject.isStickerHasSet(document)) {
                                     items.add(LocaleController.getString("AddToFavorites", R.string.AddToFavorites));
                                     options.add(20);
                                     icons.add(R.drawable.msg_fave);
@@ -19811,7 +19833,8 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                                 icons.add(R.drawable.msg_unfave);
                             }
                         }
-                        if (!currentChat.noforwards && !selectedObject.isSponsored() && chatMode != MODE_SCHEDULED && !selectedObject.needDrawBluredPreview() && !selectedObject.isLiveLocation() && selectedObject.type != 16) {
+                        // todo: maybe check
+                        if (ChatObject.canForward(currentChat) && !selectedObject.isSponsored() && chatMode != MODE_SCHEDULED && !selectedObject.needDrawBluredPreview() && !selectedObject.isLiveLocation() && selectedObject.type != 16) {
                             items.add(LocaleController.getString("Forward", R.string.Forward));
                             options.add(2);
                             icons.add(R.drawable.msg_forward);
@@ -19873,27 +19896,33 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                         }
                         if (type == 4) {
                             if (selectedObject.isVideo()) {
-                                items.add(LocaleController.getString("SaveToGallery", R.string.SaveToGallery));
-                                options.add(4);
-                                icons.add(R.drawable.msg_gallery);
-                                items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
-                                options.add(6);
-                                icons.add(R.drawable.msg_shareout);
+                                if (ChatObject.canForward(currentChat)) {
+                                    items.add(LocaleController.getString("SaveToGallery", R.string.SaveToGallery));
+                                    options.add(4);
+                                    icons.add(R.drawable.msg_gallery);
+                                    items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
+                                    options.add(6);
+                                    icons.add(R.drawable.msg_shareout);
+                                }
                             } else if (selectedObject.isMusic()) {
-                                items.add(LocaleController.getString("SaveToMusic", R.string.SaveToMusic));
-                                options.add(10);
-                                icons.add(R.drawable.msg_download);
-                                items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
-                                options.add(6);
-                                icons.add(R.drawable.msg_shareout);
+                                if (ChatObject.canForward(currentChat)) {
+                                    items.add(LocaleController.getString("SaveToMusic", R.string.SaveToMusic));
+                                    options.add(10);
+                                    icons.add(R.drawable.msg_download);
+                                    items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
+                                    options.add(6);
+                                    icons.add(R.drawable.msg_shareout);
+                                }
                             } else if (!selectedObject.isVideo() && selectedObject.getDocument() != null) {
-                                items.add(LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
-                                options.add(10);
-                                icons.add(R.drawable.msg_download);
-                                items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
-                                options.add(6);
-                                icons.add(R.drawable.msg_shareout);
-                            } else {
+                                if (ChatObject.canForward(currentChat)) {
+                                    items.add(LocaleController.getString("SaveToDownloads", R.string.SaveToDownloads));
+                                    options.add(10);
+                                    icons.add(R.drawable.msg_download);
+                                    items.add(LocaleController.getString("ShareFile", R.string.ShareFile));
+                                    options.add(6);
+                                    icons.add(R.drawable.msg_shareout);
+                                }
+                            } else if (ChatObject.canForward(currentChat)) {
                                 items.add(LocaleController.getString("SaveToGallery", R.string.SaveToGallery));
                                 options.add(4);
                                 icons.add(R.drawable.msg_gallery);
@@ -19907,9 +19936,11 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                             options.add(5);
                             icons.add(R.drawable.msg_theme);
                         } else if (type == 7) {
-                            items.add(LocaleController.getString("AddToStickers", R.string.AddToStickers));
-                            options.add(9);
-                            icons.add(R.drawable.msg_sticker);
+                            if (ChatObject.canForward(currentChat)) {
+                                items.add(LocaleController.getString("AddToStickers", R.string.AddToStickers));
+                                options.add(9);
+                                icons.add(R.drawable.msg_sticker);
+                            }
                         } else if (type == 8) {
                             TLRPC.User user = getMessagesController().getUser(selectedObject.messageOwner.media.user_id);
                             if (user != null && user.id != getUserConfig().getClientUserId() && getContactsController().contactsDict.get(user.id) == null) {
@@ -20219,17 +20250,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
 
             // todo: if
             TextView noForwardsAlert = null;
-            if (currentChat.noforwards) {
-                /*noForwardsAlert = new FrameLayout(contentView.getContext());
-                TextView mycell = new TextView(contentView.getContext());
-                mycell.setText("Forwards from this channel are restricted.");
-                Drawable shadowDrawable2 = ContextCompat.getDrawable(contentView.getContext(), R.drawable.popup_fixed_alert).mutate();
-                shadowDrawable2.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_actionBarDefaultSubmenuBackground), PorterDuff.Mode.MULTIPLY));
-                mycell.setBackground(shadowDrawable2);
-                noForwardsAlert.setMinimumHeight(AndroidUtilities.dp(60));
-                noForwardsAlert.addView(mycell, FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.MATCH_PARENT);
-                scrimPopupContainerLayout.addView(noForwardsAlert, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER, 0, -8, 0, 0));*/
-
+            if (!ChatObject.canForward(currentChat)) {
                 Drawable shadowDrawable2 = ContextCompat.getDrawable(contentView.getContext(), R.drawable.popup_fixed_alert).mutate();
                 shadowDrawable2.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_actionBarDefaultSubmenuBackground), PorterDuff.Mode.MULTIPLY));
 
@@ -20239,7 +20260,6 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 noForwardsAlert.setMinimumWidth(AndroidUtilities.dp(200));
                 noForwardsAlert.setPadding(backgroundPaddings.left + AndroidUtilities.dp(16), backgroundPaddings.top + AndroidUtilities.dp(8), backgroundPaddings.right + AndroidUtilities.dp(16), backgroundPaddings.bottom + AndroidUtilities.dp(8));
 
-                // scrimPopupContainerLayout.addView(noForwardsAlert, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER, 0, -8, 0, 0));
                 scrimPopupContainerLayout.addView(noForwardsAlert, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, -8, 0, 0));
             }
 
