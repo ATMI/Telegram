@@ -4436,7 +4436,6 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         menuItem.setContentDescription(LocaleController.getString("AccDescrMoreOptions", R.string.AccDescrMoreOptions));
         allMediaItem = menuItem.addSubItem(gallery_menu_showall, R.drawable.msg_media, LocaleController.getString("ShowAllMedia", R.string.ShowAllMedia));
         allMediaItem.setColors(0xfffafafa, 0xfffafafa);
-        // todo:
         menuItem.addSubItem(gallery_menu_savegif, R.drawable.msg_gif, LocaleController.getString("SaveToGIFs", R.string.SaveToGIFs)).setColors(0xfffafafa, 0xfffafafa);
         menuItem.addSubItem(gallery_menu_showinchat, R.drawable.msg_message, LocaleController.getString("ShowInChat", R.string.ShowInChat)).setColors(0xfffafafa, 0xfffafafa);
         menuItem.addSubItem(gallery_menu_masks2, R.drawable.msg_sticker, LocaleController.getString("ShowStickers", R.string.ShowStickers)).setColors(0xfffafafa, 0xfffafafa);
@@ -6167,12 +6166,12 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         return 0;
     }
 
-	private int getRightInset() {
-		if (lastInsets != null && Build.VERSION.SDK_INT >= 21) {
-			return ((WindowInsets) lastInsets).getSystemWindowInsetRight();
-		}
-		return 0;
-	}
+    private int getRightInset() {
+        if (lastInsets != null && Build.VERSION.SDK_INT >= 21) {
+            return ((WindowInsets) lastInsets).getSystemWindowInsetRight();
+        }
+        return 0;
+    }
 
     private void dismissInternal() {
         try {
@@ -6399,7 +6398,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             x = max;
         }
         videoPreviewFrame.setTranslationX(x);
-     }
+    }
 
     private void showVideoSeekPreviewPosition(boolean show) {
         if (show && videoPreviewFrame.getTag() != null || !show && videoPreviewFrame.getTag() == null) {
@@ -9808,8 +9807,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                     needSearchImageInArr = false;
                 } else if (currentAnimation != null) {
                     needSearchImageInArr = false;
-                    // todo: update it
-                    if (messageObject.canForwardMessage() && (null == parentActivity || ChatObject.canForward(parentChatActivity.getCurrentChat()))) {
+                    if (messageObject.canForwardMessage()) {
                         setItemVisible(sendItem, true, false);
                     }
                 } else if (!messageObject.scheduled && !(messageObject.messageOwner.media instanceof TLRPC.TL_messageMediaInvoice) && !(messageObject.messageOwner.media instanceof TLRPC.TL_messageMediaWebPage) && (messageObject.messageOwner.action == null || messageObject.messageOwner.action instanceof TLRPC.TL_messageActionEmpty)) {
@@ -9819,9 +9817,9 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                         menuItem.showSubItem(gallery_menu_showinchat);
                         menuItem.showSubItem(gallery_menu_showall);
                     }
-                    setItemVisible(sendItem, null == parentActivity || ChatObject.canForward(parentChatActivity.getCurrentChat()), false);
+                    setItemVisible(sendItem, true, false);
                 } else if (isEmbedVideo && messageObject.eventId == 0) {
-                    setItemVisible(sendItem, null == parentActivity || ChatObject.canForward(parentChatActivity.getCurrentChat()), false);
+                    setItemVisible(sendItem, true, false);
                 }
                 setImageIndex(0);
             }
@@ -9869,7 +9867,6 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 opennedFromMedia = true;
                 startOffset = object.starOffset;
                 menuItem.showSubItem(gallery_menu_showinchat);
-                // todo: update
                 if (openingObject.canForwardMessage()) {
                     setItemVisible(sendItem, true, false);
                 }
@@ -11633,7 +11630,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
         if (Instance != null) {
             result = Instance.isVisible && !Instance.disableShowCheck && object != null &&
                     ((Instance.currentFileLocation != null && object.local_id == Instance.currentFileLocation.location.local_id && object.volume_id == Instance.currentFileLocation.location.volume_id && object.dc_id == Instance.currentFileLocation.dc_id) ||
-                     (Instance.currentFileLocationVideo != null && object.local_id == Instance.currentFileLocationVideo.location.local_id && object.volume_id == Instance.currentFileLocationVideo.location.volume_id && object.dc_id == Instance.currentFileLocationVideo.dc_id));
+                            (Instance.currentFileLocationVideo != null && object.local_id == Instance.currentFileLocationVideo.location.local_id && object.volume_id == Instance.currentFileLocationVideo.location.volume_id && object.dc_id == Instance.currentFileLocationVideo.dc_id));
         }
         return result;
     }
