@@ -4194,7 +4194,9 @@ public class MessageObject {
     }
 
     public boolean needDrawShareButton() {
-        if (preview) {
+        if (!canForwardMessage()) {
+            return false;
+        } else if (preview) {
             return false;
         } else if (scheduled) {
             return false;
@@ -5688,21 +5690,11 @@ public class MessageObject {
     // todo: update method
     public boolean canForwardMessage() {
         MessagesController controller = MessagesController.getInstance(currentAccount);
-        TLRPC.Chat chat = null, fromChat = null;
+        TLRPC.Chat chat = null;
         if (null != controller) {
             chat = controller.getChat(getChatId());
-
-            if (messageOwner.fwd_from != null) {
-                final TLRPC.Peer fromPeer = messageOwner.fwd_from.saved_from_peer;
-                if (fromPeer instanceof TLRPC.TL_peerChat) {
-                    fromChat = controller.getChat(fromPeer.chat_id);
-                } else if (fromPeer instanceof TLRPC.TL_peerChannel) {
-                    fromChat = controller.getChat(fromPeer.channel_id);
-                }
-            }
         }
-
-        return ((ChatObject.canForward(fromChat)) && (ChatObject.canForward(chat))) && !(messageOwner instanceof TLRPC.TL_message_secret) && !needDrawBluredPreview() && !isLiveLocation() && type != 16 && !isSponsored();
+        return ((ChatObject.canForward(chat))) && !(messageOwner instanceof TLRPC.TL_message_secret) && !needDrawBluredPreview() && !isLiveLocation() && type != 16 && !isSponsored();
     }
 
     public boolean canEditMedia() {

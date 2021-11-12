@@ -450,6 +450,7 @@ public class MessagesController extends BaseController implements NotificationCe
     public static int UPDATE_MASK_CHECK = 65536;
     public static int UPDATE_MASK_REORDER = 131072;
     public static int UPDATE_MASK_EMOJI_INTERACTIONS = 262144;
+    public static int UPDATE_MASK_NO_FORWARDS = (1 << 19);
     public static int UPDATE_MASK_ALL = UPDATE_MASK_AVATAR | UPDATE_MASK_STATUS | UPDATE_MASK_NAME | UPDATE_MASK_CHAT_AVATAR | UPDATE_MASK_CHAT_NAME | UPDATE_MASK_CHAT_MEMBERS | UPDATE_MASK_USER_PRINT | UPDATE_MASK_USER_PHONE | UPDATE_MASK_READ_DIALOG_MESSAGE | UPDATE_MASK_PHONE;
 
     public static int PROMO_TYPE_PROXY = 0;
@@ -14610,12 +14611,16 @@ public class MessagesController extends BaseController implements NotificationCe
         getConnectionsManager().sendRequest(req, (response, error) -> {
             if (null == response) {
                 if (null != callback) {
-                    AndroidUtilities.runOnUIThread(()->callback.onFailure(req, error));
+                    AndroidUtilities.runOnUIThread(() -> callback.onFailure(req, error));
                 }
             } else {
                 chat.noforwards = enabled;
                 if (null != callback) {
-                    AndroidUtilities.runOnUIThread(callback::onSuccess);
+                    getMessagesController().processUpdates((TLRPC.Updates) response, false);
+                    AndroidUtilities.runOnUIThread(() -> {
+                        callback.onSuccess();
+                        getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, UPDATE_MASK_NO_FORWARDS);
+                    });
                 }
             }
         }, ConnectionsManager.RequestFlagInvokeAfter);

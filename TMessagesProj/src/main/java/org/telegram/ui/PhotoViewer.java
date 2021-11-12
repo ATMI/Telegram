@@ -3551,7 +3551,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
 
             @Override
             public boolean onTouchEvent(MotionEvent event) {
-                return isVisible && PhotoViewer.this.onTouchEvent(event);
+                 return isVisible && PhotoViewer.this.onTouchEvent(event);
             }
 
             @Override
@@ -9849,6 +9849,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             avatarsArr.add(new TLRPC.TL_photoEmpty());
             bottomButtonsLayout.setVisibility(!videoPlayerControlVisible ? View.VISIBLE : View.GONE);
             allowShare = true;
+            // todo: do same as later
             menuItem.hideSubItem(gallery_menu_showall);
             if (bottomButtonsLayout.getVisibility() == View.VISIBLE) {
                 menuItem.hideSubItem(gallery_menu_share);
@@ -10153,7 +10154,12 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                 if (!newMessageObject.canDeleteMessage(parentChatActivity != null && parentChatActivity.isInScheduleMode(), null)) {
                     menuItem.hideSubItem(gallery_menu_delete);
                 }
-                allowShare = true;
+
+                if (!(allowShare = newMessageObject.canForwardMessage())) { // newMes
+                    menuItem.hideSubItem(gallery_menu_savegif);
+                    shareButton.setVisibility(View.GONE);
+                }
+
                 bottomButtonsLayout.setVisibility(View.VISIBLE);
                 paintButton.setVisibility(View.GONE);
                 actionBar.setTitle(LocaleController.getString("AttachGif", R.string.AttachGif));
@@ -10235,12 +10241,20 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                     bottomButtonsLayout.setVisibility(View.GONE);
                     menuItem.hideSubItem(gallery_menu_share);
                 } else {
-                    allowShare = true;
-                    menuItem.showSubItem(gallery_menu_save);
+                    allowShare = newMessageObject.canForwardMessage();
+                    if (allowShare) {
+                        menuItem.showSubItem(gallery_menu_save);
+                        shareButton.setVisibility(View.VISIBLE);
+                        sendItem.setVisibility(View.VISIBLE);
+                    } else {
+                        menuItem.hideSubItem(gallery_menu_save);
+                        shareButton.setVisibility(View.GONE);
+                        sendItem.setVisibility(View.GONE);
+                    }
                     boolean canPaint = newMessageObject.getDocument() == null || newMessageObject.canPreviewDocument() || newMessageObject.getMimeType().startsWith("video/");
-                    paintButton.setVisibility(canPaint && canSendMediaToParentChatActivity() ? View.VISIBLE : View.GONE);
+                    paintButton.setVisibility(allowShare && canPaint && canSendMediaToParentChatActivity() ? View.VISIBLE : View.GONE);
                     bottomButtonsLayout.setVisibility(!videoPlayerControlVisible ? View.VISIBLE : View.GONE);
-                    if (bottomButtonsLayout.getVisibility() == View.VISIBLE) {
+                    if (!allowShare || bottomButtonsLayout.getVisibility() == View.VISIBLE) {
                         menuItem.hideSubItem(gallery_menu_share);
                     } else {
                         menuItem.showSubItem(gallery_menu_share);
@@ -10546,6 +10560,20 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             pageBlocksAdapter.updateSlideshowCell(pageBlock);
         }
         setCurrentCaption(newMessageObject, caption, animateCaption);
+        // todo: check
+        if (allowShare) {
+            menuItem.hideSubItem(gallery_menu_save);
+            menuItem.hideSubItem(gallery_menu_savegif);
+
+            menuItem.hideSubItem(gallery_menu_send);
+            menuItem.hideSubItem(gallery_menu_share);
+            menuItem.hideSubItem(gallery_menu_share2);
+
+            sendItem.setVisibility(View.GONE);
+
+            shareItem.setVisibility(View.GONE);
+            shareButton.setVisibility(View.GONE);
+        }
     }
 
     private void showVideoTimeline(boolean show, boolean animated) {
@@ -10639,7 +10667,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
             currentMessageObject = newMessageObject;
             isVideo = newMessageObject.isVideo();
             if (sharedMediaType == MediaDataController.MEDIA_FILE) {
-                if (canZoom = newMessageObject.canPreviewDocument()) {
+                if (allowShare && (canZoom = newMessageObject.canPreviewDocument())) {
                     menuItem.showSubItem(gallery_menu_save);
                     setDoubleTapEnabled(true);
                 } else {

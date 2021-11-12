@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -403,6 +404,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
     private AnimatorSet floatingDateAnimation;
     private Runnable hideFloatingDateRunnable = () -> hideFloatingDateView(true);
     private ArrayList<View> actionModeViews = new ArrayList<>();
+    private HintView noForwardsHint;
 
     private float additionalFloatingTranslation;
 
@@ -1116,6 +1118,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
         profileActivity.getNotificationCenter().addObserver(this, NotificationCenter.messagePlayingDidReset);
         profileActivity.getNotificationCenter().addObserver(this, NotificationCenter.messagePlayingPlayStateChanged);
         profileActivity.getNotificationCenter().addObserver(this, NotificationCenter.messagePlayingDidStart);
+        profileActivity.getNotificationCenter().addObserver(this, NotificationCenter.updateInterfaces);
 
         for (int a = 0; a < 10; a++) {
             //cellCache.add(new SharedPhotoVideoCell(context));
@@ -2853,6 +2856,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
         profileActivity.getNotificationCenter().removeObserver(this, NotificationCenter.messagePlayingDidReset);
         profileActivity.getNotificationCenter().removeObserver(this, NotificationCenter.messagePlayingPlayStateChanged);
         profileActivity.getNotificationCenter().removeObserver(this, NotificationCenter.messagePlayingDidStart);
+        profileActivity.getNotificationCenter().removeObserver(this, NotificationCenter.updateInterfaces);
     }
 
     private void checkCurrentTabValid() {
@@ -3454,6 +3458,17 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
         }
         if (show) {
             actionModeLayout.setVisibility(VISIBLE);
+        } else if (null != noForwardsHint && noForwardsHint.getVisibility() == VISIBLE) {
+            noForwardsHint.hide();
+        }
+
+        final boolean canForward = ChatObject.canForward(delegate.getCurrentChat());
+        if (canForward) {
+            forwardItem.setEnabled(true);
+            forwardItem.setAlpha(1);
+        } else {
+            forwardItem.setEnabled(false);
+            forwardItem.setAlpha(0.5f);
         }
         actionModeAnimation = new AnimatorSet();
         actionModeAnimation.playTogether(ObjectAnimator.ofFloat(actionModeLayout, View.ALPHA, show ? 1.0f : 0.0f));
@@ -3470,7 +3485,27 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
                     return;
                 }
                 actionModeAnimation = null;
-                if (!show) {
+                if (show) {
+                    if (!canForward) {
+                        if (null == noForwardsHint) {
+                            noForwardsHint = new HintView(getContext(), 9, profileActivity.getResourceProvider());
+                            noForwardsHint.setText("Forwards from this channel are restricted");
+                            ((ViewGroup) profileActivity.getFragmentView()).addView(
+                                    noForwardsHint,
+                                    LayoutHelper.createFrame(
+                                            LayoutHelper.WRAP_CONTENT,
+                                            LayoutHelper.WRAP_CONTENT,
+                                            Gravity.LEFT | Gravity.TOP,
+                                            10,
+                                            0,
+                                            10,
+                                            0
+                                    )
+                            );
+                        }
+                        noForwardsHint.showForView(forwardItem, true);
+                    }
+                } else {
                     actionModeLayout.setVisibility(INVISIBLE);
                 }
             }
@@ -3796,6 +3831,33 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
                             if (messageObject1 != null) {
                                 cell.updateButtonState(false, true);
                             }
+                        }
+                    }
+                }
+            }
+        } else if (id == NotificationCenter.updateInterfaces) {
+            final Integer updateMask = (Integer) args[0];
+            if (null == updateMask)
+                return;
+
+            if (0 != (updateMask & MessagesController.UPDATE_MASK_NO_FORWARDS)) {
+                if (null != forwardItem) {
+                    final TLRPC.Chat chat = delegate.getCurrentChat();
+                    if (null != chat && chat.noforwards) {
+                        forwardItem.setEnabled(false);
+                        forwardItem.setAlpha(0.5f);
+                    } else {
+                        forwardItem.setEnabled(true);
+                        forwardItem.setAlpha(1);
+                    }
+                    if (0 != (updateMask & MessagesController.UPDATE_MASK_NO_FORWARDS)) {
+                        try {
+                            if (Build.VERSION.SDK_INT >= 23) {
+                                final TLRPC.Chat currentChat = delegate.getCurrentChat();
+                                AndroidUtilities.setFlagSecure(sharedMediaPreloader.parentFragment, (currentChat != null && currentChat.noforwards) && (SharedConfig.passcodeHash.length() == 0 || SharedConfig.allowScreenCapture));
+                            }
+                        } catch (Exception e) {
+                            FileLog.e(e);
                         }
                     }
                 }
