@@ -1844,9 +1844,9 @@ public class MessageObject {
         } else if (event.action instanceof TLRPC.TL_channelAdminLogEventActionToggleNoForwards) {
             // todo: string resources
             if (((TLRPC.TL_channelAdminLogEventActionToggleNoForwards) event.action).new_value) {
-                messageText = replaceWithLink("un1 enabled media saving", "un1", fromUser);
+                messageText = replaceWithLink("un1 disabled forwarding", "un1", fromUser);
             } else {
-                messageText = replaceWithLink("un1 disabled media saving", "un1", fromUser);
+                messageText = replaceWithLink("un1 enabled forwarding", "un1", fromUser);
             }
         } else {
             messageText = "unsupported " + event.action;
