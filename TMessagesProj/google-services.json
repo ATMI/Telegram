@@ -1,62 +1,33 @@
 {
   "project_info": {
-    "project_number": "780903488845",
-    "project_id": "telegram-3-8df84",
-    "storage_bucket": "telegram-3-8df84.appspot.com"
+    "project_number": "448256731979",
+    "project_id": "telegramcontest-eb51a",
+    "storage_bucket": "telegramcontest-eb51a.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:780903488845:android:01af77de0f4e301fc02b04",
+        "mobilesdk_app_id": "1:448256731979:android:2a80af9ad2145b330816ce",
         "android_client_info": {
-          "package_name": "org.telegram.messenger"
+          "package_name": "org.telegram.messenger.su.mya"
         }
       },
       "oauth_client": [
         {
-          "client_id": "780903488845-9mlu0kf0ihnsh5iq24brhdbva4cpagj4.apps.googleusercontent.com",
+          "client_id": "448256731979-0ravto7eedfl11979vrbe4kasrhb598q.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDiVlEqAL2_-mpwK5bBXCwWeN5JODECx5c"
+          "current_key": "AIzaSyD-yIeZB7AJRoBQd68Q3B8-Rppjj-duwjo"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "780903488845-9mlu0kf0ihnsh5iq24brhdbva4cpagj4.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:780903488845:android:732f3324b7573e9bc02b04",
-        "android_client_info": {
-          "package_name": "org.telegram.messenger.beta"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "780903488845-9mlu0kf0ihnsh5iq24brhdbva4cpagj4.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDiVlEqAL2_-mpwK5bBXCwWeN5JODECx5c"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "780903488845-9mlu0kf0ihnsh5iq24brhdbva4cpagj4.apps.googleusercontent.com",
+              "client_id": "448256731979-0ravto7eedfl11979vrbe4kasrhb598q.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
