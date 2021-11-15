@@ -27,7 +27,6 @@ import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
-import org.telegram.messenger.MessagesStorage;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.tgnet.ConnectionsManager;
@@ -492,7 +491,7 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
         if (isPrivate) {
             if (getMessagesController().setNoForwards(currentChat, noForwardsCheck.isChecked(), new MessagesController.RequestExecutedCallback() {
                 @Override
-                public void onSuccess() {
+                public void onSuccess(TLObject response) {
                     Log.d("CHAT", "no forwards: " + currentChat.noforwards + " for chat: " + currentChat.title);
                     processDone();
                 }

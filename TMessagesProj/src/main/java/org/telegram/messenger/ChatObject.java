@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import androidx.annotation.NonNull;
 import androidx.collection.LongSparseArray;
 
 public class ChatObject {
@@ -1619,6 +1620,11 @@ public class ChatObject {
 
     public static TLRPC.ChatPhoto getPhoto(TLRPC.Chat chat) {
         return hasPhoto(chat) ? chat.photo : null;
+    }
+
+    @NonNull
+    public static String getParticipantsCountString(TLRPC.Chat chat) {
+        return LocaleController.formatPluralString(ChatObject.isChannel(chat) && !chat.megagroup ? "Subscribers" : "Members", chat.participants_count);
     }
 
     public static class VideoParticipant {

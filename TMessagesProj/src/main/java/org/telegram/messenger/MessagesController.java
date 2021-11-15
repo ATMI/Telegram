@@ -21,12 +21,12 @@ import android.os.SystemClock;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 import android.util.SparseIntArray;
-import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.collection.LongSparseArray;
 import androidx.core.app.NotificationManagerCompat;
 
@@ -3321,10 +3321,10 @@ public class MessagesController extends BaseController implements NotificationCe
         });
     }
 
-    public void loadFullChat(long chatId, int classGuid, boolean force) {
+    public TLRPC.ChatFull loadFullChat(long chatId, int classGuid, boolean force, @Nullable RequestExecutedCallback callback) {
         boolean loaded = loadedFullChats.contains(chatId);
-        if (loadingFullChats.contains(chatId) || !force && loaded) {
-            return;
+        if (loaded && !force) {
+            return getChatFull(chatId);
         }
         loadingFullChats.add(chatId);
         TLObject request;
@@ -3421,17 +3421,28 @@ public class MessagesController extends BaseController implements NotificationCe
                             getNotificationCenter().postNotificationName(NotificationCenter.dialogsNeedReload);
                         }
                     }
+
+                    if (null != callback)
+                        callback.onSuccess(response);
                 });
             } else {
                 AndroidUtilities.runOnUIThread(() -> {
                     checkChannelError(error.text, chatId);
                     loadingFullChats.remove(chatId);
+
+                    if (null != callback)
+                        callback.onFailure(request, error);
                 });
             }
         });
         if (classGuid != 0) {
             getConnectionsManager().bindRequestToGuid(reqId, classGuid);
         }
+        return null;
+    }
+
+    public TLRPC.ChatFull loadFullChat(long chatId, int classGuid, boolean force) {
+        return loadFullChat(chatId, classGuid, force, null);
     }
 
     public void loadFullUser(final TLRPC.User user, int classGuid, boolean force) {
@@ -14599,12 +14610,12 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     // todo: check, because copy paste used from 'toogleChannelInvitesHistory')
-    public boolean setNoForwards(TLRPC.Chat chat, boolean enabled, RequestExecutedCallback callback) {
+    public boolean setNoForwards(@NonNull TLRPC.Chat chat, boolean enabled, @Nullable RequestExecutedCallback callback) {
         if (chat.noforwards == enabled) {
             return false;
         }
 
-        TLRPC.TL_messages_toggleNoForwards req = new TLRPC.TL_messages_toggleNoForwards();
+        final TLRPC.TL_messages_toggleNoForwards req = new TLRPC.TL_messages_toggleNoForwards();
         req.peer = getInputPeer(chat);
         req.enabled = enabled;
 
@@ -14618,7 +14629,7 @@ public class MessagesController extends BaseController implements NotificationCe
                 if (null != callback) {
                     getMessagesController().processUpdates((TLRPC.Updates) response, false);
                     AndroidUtilities.runOnUIThread(() -> {
-                        callback.onSuccess();
+                        callback.onSuccess(response);
                         getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, UPDATE_MASK_NO_FORWARDS);
                     });
                 }
@@ -14626,6 +14637,52 @@ public class MessagesController extends BaseController implements NotificationCe
         }, ConnectionsManager.RequestFlagInvokeAfter);
 
         return true;
+    }
+
+    public void getSendAs(@NonNull TLRPC.TL_channel channel, @NonNull RequestExecutedCallback callback) {
+        final TLRPC.TL_channels_getSendAs req = new TLRPC.TL_channels_getSendAs();
+        req.peer = getInputPeer(channel);
+
+        getConnectionsManager().sendRequest(req, (response, error) -> {
+            if (null == response) {
+                AndroidUtilities.runOnUIThread(() -> {
+                    callback.onFailure(req, error);
+                });
+            } else {
+                AndroidUtilities.runOnUIThread(() -> {
+                    callback.onSuccess(response);
+                });
+            }
+        });
+    }
+
+    public void saveSendAs(@NonNull TLRPC.TL_channel channel, @NonNull TLRPC.Peer peer, @Nullable RequestExecutedCallback callback) {
+        // todo: do i need to do request (i think no)
+        final TLRPC.ChatFull chatFull = getChatFull(channel.id);
+        if (null != chatFull)
+            chatFull.default_send_as = peer;
+
+        final TLRPC.TL_messages_saveDefaultSendAs req = new TLRPC.TL_messages_saveDefaultSendAs();
+        req.peer = getInputPeer(channel);
+        req.send_as = getInputPeer(peer);
+
+        getConnectionsManager().sendRequest(req, (response, error) -> {
+            if (null != callback) {
+                if (null == response) {
+                    AndroidUtilities.runOnUIThread(() -> {
+                        callback.onFailure(req, error);
+                    });
+                } else {
+                    AndroidUtilities.runOnUIThread(() -> {
+                        callback.onSuccess(response);
+                    });
+                }
+            }
+        });
+    }
+
+    public void saveSendAs(@NonNull TLRPC.TL_channel channel, @NonNull TLRPC.Peer peer) {
+        saveSendAs(channel, peer, null);
     }
 
     public int getChatPendingRequestsOnClosed(long chatId) {
@@ -14644,7 +14701,7 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public interface RequestExecutedCallback {
-        void onSuccess();
+        void onSuccess(TLObject response);
         void onFailure(TLObject request, TLRPC.TL_error error);
     }
 }

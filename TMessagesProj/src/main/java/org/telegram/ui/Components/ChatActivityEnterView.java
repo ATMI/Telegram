@@ -93,6 +93,8 @@ import androidx.customview.widget.ExploreByTouchHelper;
 import androidx.recyclerview.widget.ChatListItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.google.android.gms.vision.Frame;
+
 import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
@@ -116,6 +118,7 @@ import org.telegram.messenger.Utilities;
 import org.telegram.messenger.VideoEditedInfo;
 import org.telegram.messenger.camera.CameraController;
 import org.telegram.tgnet.ConnectionsManager;
+import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.ActionBarMenuSubItem;
@@ -211,6 +214,8 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
         default boolean hasForwardingMessages() {
             return false;
         }
+
+        default void onSendDeputyButtonClicked() {}
     }
 
     private final static int RECORD_STATE_ENTER = 0;
@@ -381,6 +386,7 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
     protected int animatedTop;
     public ValueAnimator currentTopViewAnimation;
     private ReplaceableIconDrawable botButtonDrawable;
+    private SendDeputy.OpenButton deputyButton;
 
     private CharSequence draftMessage;
     private boolean draftSearchWebpage;
@@ -479,6 +485,7 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
     private final Drawable doneCheckDrawable;
     boolean doneButtonEnabled = true;
     private ValueAnimator doneButtonColorAnimator;
+    private final FrameLayout messageLayout;
 
     private Runnable openKeyboardRunnable = new Runnable() {
         @Override
@@ -1690,7 +1697,7 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
         textFieldContainer.setPadding(0, AndroidUtilities.dp(1), 0, 0);
         addView(textFieldContainer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.BOTTOM, 0, 1, 0, 0));
 
-        FrameLayout frameLayout = new FrameLayout(context) {
+        messageLayout = new FrameLayout(context) {
             @Override
             protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
                 super.onLayout(changed, left, top, right, bottom);
@@ -1723,8 +1730,51 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
                 return super.drawChild(canvas, child, drawingTime);
             }
         };
-        frameLayout.setClipChildren(false);
-        textFieldContainer.addView(frameLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM, 0, 0, 48, 0));
+        messageLayout.setClipChildren(false);
+
+
+        int leftMargin = 3;
+        if (null != parentActivity) {
+            deputyButton = new SendDeputy.OpenButton(context);
+            deputyButton.setOnClickListener(v -> delegate.onSendDeputyButtonClicked());
+            // todo: null checks
+            final TLRPC.Chat chat = parentFragment.getCurrentChat();
+            final TLRPC.ChatFull chatFull = SendDeputy.canSendDeputy(currentAccount, chat, new MessagesController.RequestExecutedCallback() {
+                @Override
+                public void onSuccess(TLObject response) {
+                    if (null == chat)
+                        return;
+
+                    final TLRPC.ChatFull newChatFull = SendDeputy.canSendDeputy(currentAccount, chat);
+                    final LayoutParams layoutParams = (LayoutParams) messageLayout.getLayoutParams();
+                    int newLeftMargin = 3;
+
+                    if (null == newChatFull) {
+                        deputyButton.deactivate();
+                    } else {
+                        deputyButton.activate((TLRPC.TL_channelFull) newChatFull);
+                        newLeftMargin += AndroidUtilities.dp(48);
+                    }
+                    layoutParams.leftMargin = newLeftMargin;
+
+                }
+
+                @Override
+                public void onFailure(TLObject request, TLRPC.TL_error error) {
+                    // todo: failure
+                }
+            });
+
+            if (chatFull == null) {
+                deputyButton.deactivate();
+            } else {
+                deputyButton.activate((TLRPC.TL_channelFull) chatFull);
+                leftMargin += 48;
+            }
+            textFieldContainer.addView(deputyButton, LayoutHelper.createFrame(48, 48, Gravity.CENTER_VERTICAL | Gravity.LEFT, 12, 0, 0, 0));
+        }
+
+        textFieldContainer.addView(messageLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM, leftMargin, 0, 48, 0));
 
         for (int a = 0; a < 2; a++) {
             emojiButton[a] = new ImageView(context) {
@@ -1743,7 +1793,7 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
             if (Build.VERSION.SDK_INT >= 21) {
                 emojiButton[a].setBackgroundDrawable(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector)));
             }
-            frameLayout.addView(emojiButton[a], LayoutHelper.createFrame(48, 48, Gravity.BOTTOM | Gravity.LEFT, 3, 0, 0, 0));
+            messageLayout.addView(emojiButton[a], LayoutHelper.createFrame(48, 48, Gravity.BOTTOM | Gravity.LEFT, 3, 0, 0, 0));
             emojiButton[a].setOnClickListener(view -> {
                 if (adjustPanLayoutHelper != null && adjustPanLayoutHelper.animationInProgress()) {
                     return;
@@ -2023,7 +2073,7 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
         messageEditText.setHintColor(getThemedColor(Theme.key_chat_messagePanelHint));
         messageEditText.setHintTextColor(getThemedColor(Theme.key_chat_messagePanelHint));
         messageEditText.setCursorColor(getThemedColor(Theme.key_chat_messagePanelCursor));
-        frameLayout.addView(messageEditText, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM, 52, 0, isChat ? 50 : 2, 0));
+        messageLayout.addView(messageEditText, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM, 52, 0, isChat ? 50 : 2, 0));
         messageEditText.setOnKeyListener(new OnKeyListener() {
 
             boolean ctrlPressed = false;
@@ -2234,7 +2284,7 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
                 if (Build.VERSION.SDK_INT >= 21) {
                     scheduledButton.setBackgroundDrawable(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector)));
                 }
-                frameLayout.addView(scheduledButton, LayoutHelper.createFrame(48, 48, Gravity.BOTTOM | Gravity.RIGHT));
+                messageLayout.addView(scheduledButton, LayoutHelper.createFrame(48, 48, Gravity.BOTTOM | Gravity.RIGHT));
                 scheduledButton.setOnClickListener(v -> {
                     if (delegate != null) {
                         delegate.openScheduledMessages();
@@ -2247,7 +2297,7 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
             attachLayout.setEnabled(false);
             attachLayout.setPivotX(AndroidUtilities.dp(48));
             attachLayout.setClipChildren(false);
-            frameLayout.addView(attachLayout, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 48, Gravity.BOTTOM | Gravity.RIGHT));
+            messageLayout.addView(attachLayout, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 48, Gravity.BOTTOM | Gravity.RIGHT));
 
 
             botCommandsMenuButton = new BotCommandsMenuView(getContext());
@@ -2260,7 +2310,7 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
                     botCommandsMenuContainer.dismiss();
                 }
             });
-            frameLayout.addView(botCommandsMenuButton, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 32, Gravity.BOTTOM | Gravity.LEFT, 10, 8, 10, 8));
+            messageLayout.addView(botCommandsMenuButton, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 32, Gravity.BOTTOM | Gravity.LEFT, 10, 8, 10, 8));
             AndroidUtilities.updateViewVisibilityAnimated(botCommandsMenuButton, false, 1f, false);
             botCommandsMenuButton.setExpanded(true, false);
 
@@ -2417,7 +2467,7 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
         recordedAudioPanel.setFocusable(true);
         recordedAudioPanel.setFocusableInTouchMode(true);
         recordedAudioPanel.setClickable(true);
-        frameLayout.addView(recordedAudioPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.BOTTOM));
+        messageLayout.addView(recordedAudioPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.BOTTOM));
 
         recordDeleteImageView = new RLottieImageView(context);
         recordDeleteImageView.setScaleType(ImageView.ScaleType.CENTER);
@@ -2529,7 +2579,7 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
         recordPanel = new FrameLayout(context);
         recordPanel.setClipChildren(false);
         recordPanel.setVisibility(GONE);
-        frameLayout.addView(recordPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48));
+        messageLayout.addView(recordPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48));
         recordPanel.setOnTouchListener((v, event) -> true);
 
         slideText = new SlideTextView(context);
@@ -7625,6 +7675,26 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
             }
         } else if (id == NotificationCenter.audioRecordTooShort) {
             updateRecordIntefrace(RECORD_STATE_CANCEL_BY_TIME);
+        } else if (id == NotificationCenter.dialogsNeedReload) {
+            if (null != deputyButton && null != parentFragment) {
+                final TLRPC.Chat chat = parentFragment.getCurrentChat();
+                final TLRPC.ChatFull chatFull = SendDeputy.canSendDeputy(currentAccount, chat);
+                final FrameLayout.LayoutParams layoutParams = (LayoutParams) messageLayout.getLayoutParams();
+
+                // todo: check this
+
+                final int leftMargin;
+
+                if (null == chatFull) {
+                    deputyButton.deactivate();
+                    leftMargin = 3;
+                } else {
+                    deputyButton.activate((TLRPC.TL_channelFull) chatFull);
+                    leftMargin = 3 + 48;
+                }
+
+                layoutParams.setMargins(leftMargin, 0, 48, 0);
+            }
         }
     }
 
@@ -8515,4 +8585,9 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
         Paint paint = resourcesProvider != null ? resourcesProvider.getPaint(paintKey) : null;
         return paint != null ? paint : Theme.getThemePaint(paintKey);
     }
+
+    public SendDeputy.OpenButton getSendDeputyButton() {
+        return deputyButton;
+    }
+
 }

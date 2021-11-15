@@ -82,6 +82,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.Space;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -98,7 +99,6 @@ import androidx.recyclerview.widget.LinearSmoothScrollerCustom;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
-import com.google.android.exoplayer2.util.Log;
 
 import org.telegram.PhoneFormat.PhoneFormat;
 import org.telegram.messenger.AccountInstance;
@@ -167,7 +167,6 @@ import org.telegram.ui.Cells.ContextLinkCell;
 import org.telegram.ui.Cells.DialogCell;
 import org.telegram.ui.Cells.MentionCell;
 import org.telegram.ui.Cells.StickerCell;
-import org.telegram.ui.Cells.TextBlockCell;
 import org.telegram.ui.Cells.TextSelectionHelper;
 import org.telegram.ui.Components.AlertsCreator;
 import org.telegram.ui.Components.AnimatedFileDrawable;
@@ -220,6 +219,7 @@ import org.telegram.ui.Components.RecyclerAnimationScrollHelper;
 import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.Components.ReportAlert;
 import org.telegram.ui.Components.SearchCounterView;
+import org.telegram.ui.Components.SendDeputy;
 import org.telegram.ui.Components.ShareAlert;
 import org.telegram.ui.Components.Size;
 import org.telegram.ui.Components.SizeNotifierFrameLayout;
@@ -7105,6 +7105,22 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
             public boolean hasForwardingMessages() {
                 return forwardingMessages != null && !forwardingMessages.messages.isEmpty();
             }
+
+            @Override
+            public void onSendDeputyButtonClicked() {
+                final SendDeputy.OpenButton sendDeputyButton = chatActivityEnterView.getSendDeputyButton();
+                final SendDeputy.Selector sendDeputySelector = new SendDeputy.Selector(ChatActivity.this, scrimPaint);
+
+
+                sendDeputySelector.setOnDismissListener(() -> {
+                    final TLRPC.Peer deputyPeer = sendDeputySelector.getSelectedPeer();
+
+                    if (null != deputyPeer) {
+                        sendDeputyButton.setIconForChatOrUser(sendDeputySelector.getSelectedChatOrUser());
+                    }
+                });
+                sendDeputySelector.show(chatListView, 0, (int) chatActivityEnterView.getY());
+            }
         });
         chatActivityEnterView.setDialogId(dialog_id, currentAccount);
         if (chatInfo != null) {
@@ -9378,7 +9394,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
         return false;
     }
 
-    private void hideHints(boolean scroll) {
+    public void hideHints(boolean scroll) {
         if (!scroll) {
             if (slowModeHint != null) {
                 slowModeHint.hide();
@@ -9984,6 +10000,30 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
 
     public ChatActivityEnterView getChatActivityEnterView() {
         return chatActivityEnterView;
+    }
+
+    public RecyclerListView getChatListView() {
+        return chatListView;
+    }
+
+    public View getFragmentView() {
+        return fragmentView;
+    }
+
+    public GridLayoutManagerFixed getChatLayoutManager() {
+        return chatLayoutManager;
+    }
+
+    public FrameLayout getPagedownButton() {
+        return pagedownButton;
+    }
+
+    public FrameLayout getMentionDownButton() {
+        return mentiondownButton;
+    }
+
+    public UndoView getTopUndoView() {
+        return topUndoView;
     }
 
     public boolean isKeyboardVisible() {
@@ -17861,7 +17901,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
         return false;
     }
 
-    private void updatePinnedMessageView(boolean animated) {
+    public void updatePinnedMessageView(boolean animated) {
         updatePinnedMessageView(animated, 0);
     }
 
@@ -19342,7 +19382,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
         }, themeDelegate);
     }
 
-    private void hideActionMode() {
+    public void hideActionMode() {
         if (actionBar != null) {
             if (!actionBar.isActionModeShowed()) {
                 return;
