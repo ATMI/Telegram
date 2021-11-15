@@ -221,6 +221,7 @@ import org.telegram.ui.Components.ReportAlert;
 import org.telegram.ui.Components.SearchCounterView;
 import org.telegram.ui.Components.SendDeputy;
 import org.telegram.ui.Components.ShareAlert;
+import org.telegram.ui.Components.SharedMediaLayout;
 import org.telegram.ui.Components.Size;
 import org.telegram.ui.Components.SizeNotifierFrameLayout;
 import org.telegram.ui.Components.StickersAlert;
@@ -1296,6 +1297,19 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 processRowSelect(view, outside, x, y);
                 return;
             }
+
+            if (view instanceof ChatActionCell) {
+                final MessageObject message = ((ChatActionCell) view).getMessageObject();
+
+                if (null != message && message.isDateObject) {
+                    // todo: open calendar
+                    if (canDeleteMessagesForDateRange()) {
+                        openDeleteRangeCalendar();
+                    }
+                    return;
+                }
+            }
+
             createMenu(view, true, false, x, y);
         }
     };
@@ -5319,18 +5333,23 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
         floatingDateView.setInvalidateColors(true);
         contentView.addView(floatingDateView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 4, 0, 0));
         floatingDateView.setOnClickListener(view -> {
-            if (floatingDateView.getAlpha() == 0 || actionBar.isActionModeShowed() || reportType >= 0) {
+             if (floatingDateView.getAlpha() == 0 || actionBar.isActionModeShowed() || reportType >= 0) {
                 return;
-            }
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis((long) floatingDateView.getCustomDate() * 1000);
-            int year = calendar.get(Calendar.YEAR);
-            int monthOfYear = calendar.get(Calendar.MONTH);
-            int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
+             }
 
-            calendar.clear();
-            calendar.set(year, monthOfYear, dayOfMonth);
-            jumpToDate((int) (calendar.getTime().getTime() / 1000));
+             if (canDeleteMessagesForDateRange()) {
+                 openDeleteRangeCalendar();
+             } else {
+                 Calendar calendar = Calendar.getInstance();
+                 calendar.setTimeInMillis((long) floatingDateView.getCustomDate() * 1000);
+                 int year = calendar.get(Calendar.YEAR);
+                 int monthOfYear = calendar.get(Calendar.MONTH);
+                 int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
+
+                 calendar.clear();
+                 calendar.set(year, monthOfYear, dayOfMonth);
+                 jumpToDate((int) (calendar.getTime().getTime() / 1000));
+             }
         });
 
         if (currentChat != null) {
@@ -25218,6 +25237,16 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
 
     public Theme.ResourcesProvider getResourceProvider() {
         return themeDelegate;
+    }
+
+
+    public boolean canDeleteMessagesForDateRange() {
+        return null == currentChat & null != currentUser;
+    }
+
+    public void openDeleteRangeCalendar() {
+        final RangeCalendarFragment calendarActivity = new RangeCalendarFragment(this, dialog_id, SharedMediaLayout.FILTER_PHOTOS_AND_VIDEOS, 0);
+        presentFragment(calendarActivity);
     }
 
     public class ThemeDelegate implements Theme.ResourcesProvider, ChatActionCell.ThemeDelegate, ForwardingPreviewView.ResourcesDelegate {
